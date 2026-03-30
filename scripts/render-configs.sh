@@ -29,6 +29,16 @@ mkdir -p nginx/vhost.d config/ddclient models/bitnet models/falcon
 
 API_HOST="${API_SUBDOMAIN}.${BASE_DOMAIN}"
 CHAT_HOST="${CHAT_SUBDOMAIN}.${BASE_DOMAIN}"
+
+# Keep the nginx auth snippet safe: bearer tokens should be a single plain token.
+case "$MODEL_API_KEY" in
+  *[!A-Za-z0-9._~+/-=]*)
+    echo "MODEL_API_KEY contains unsupported characters for nginx config."
+    echo "Use a single token containing only letters, digits, '.', '_', '~', '+', '/', '-', '='."
+    exit 1
+    ;;
+esac
+
 export API_HOST CHAT_HOST MODEL_API_KEY DDCLIENT_DAEMON_SECONDS DDCLIENT_SSL DDCLIENT_USE DDCLIENT_WEB DDCLIENT_WEB_SKIP DDCLIENT_PROTOCOL DDCLIENT_LOGIN DDCLIENT_PASSWORD DDCLIENT_HOSTS
 
 DDCLIENT_CUSTOM_LINE="${DDCLIENT_CUSTOM:+custom=${DDCLIENT_CUSTOM}}"
