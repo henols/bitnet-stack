@@ -61,7 +61,11 @@ login_response="$(
 NPM_TOKEN="$(printf '%s' "$login_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
 
 proxy_hosts_json="$(api GET /api/nginx/proxy-hosts)"
-certificates_json="$(api GET /api/certificates)"
+certificates_json='[]'
+
+if [ "$NPM_ENABLE_SSL" = "true" ]; then
+  certificates_json="$(curl -fsS -X GET -H "Authorization: Bearer ${NPM_TOKEN}" "${NPM_URL}/api/certificates" 2>/dev/null || printf '[]')"
+fi
 
 ensure_certificate() {
   local domain="$1"
@@ -112,7 +116,10 @@ print(json.dumps({
 ' "$domain" "$LETSENCRYPT_EMAIL"
   )"
 
-  api POST /api/certificates "$payload" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])'
+  if ! api POST /api/certificates "$payload" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])'; then
+    echo "Warning: failed to create SSL certificate for ${domain}; configure it manually in NPM." >&2
+    printf '0'
+  fi
 }
 
 upsert_proxy_host() {
