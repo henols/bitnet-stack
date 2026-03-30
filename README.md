@@ -1,4 +1,4 @@
-# BitNet multi-model stack for `aceone.se`
+# BitNet multi-model stack
 
 This project deploys:
 
