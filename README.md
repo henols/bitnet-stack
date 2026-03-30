@@ -118,7 +118,6 @@ Start by setting these required values in `.env`:
 
 Then add optional values only if your provider requires them:
 
-- `DDCLIENT_CUSTOM`
 - `DDCLIENT_SERVER`
 - `DDCLIENT_SCRIPT`
 - `DDCLIENT_PROVIDER`
@@ -136,3 +135,5 @@ Generic setup flow:
 5. Run `./scripts/deploy.sh` once the rendered `config/ddclient/ddclient.conf` matches your provider's expected format.
 
 If your provider's documentation uses a directive that is not covered by the current template, add it to [templates/ddclient.conf.tmpl](/home/henrik/dev/henrik/git/bitnet-stack/templates/ddclient.conf.tmpl) and export it in [scripts/render-configs.sh](/home/henrik/dev/henrik/git/bitnet-stack/scripts/render-configs.sh).
+
+Note: current `ddclient` v4 images no longer accept the older `custom=yes` directive for `dyndns2` setups, so do not set `DDCLIENT_CUSTOM` unless you have verified your image/provider combination still supports it.
