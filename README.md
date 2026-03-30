@@ -145,6 +145,50 @@ If you prefer the UI, create proxy hosts like this:
 
 You can then add Let's Encrypt certificates through the UI instead of managing ACME through compose env vars.
 
+### Recommended NPM UI Setup
+
+Use the script for host bootstrap if you want, but configure SSL in the NPM UI.
+
+1. Log in to NPM at `http://<server-ip>:81`
+2. Create or verify a Proxy Host for `chat.${BASE_DOMAIN}`
+3. Configure it to forward to `open-webui` on port `8080`
+4. Create or verify a Proxy Host for `bitnet.${BASE_DOMAIN}`
+5. Configure the default forward target to `bitnet-api` on port `8080`
+6. Add a Custom Location `/bitnet/` -> `bitnet-api:8080`
+7. Add a Custom Location `/falcon/` -> `falcon-api:8080`
+8. In the `bitnet.${BASE_DOMAIN}` host, set Advanced config to:
+
+```nginx
+if ($http_authorization != "Bearer ${MODEL_API_KEY}") {
+    return 401;
+}
+```
+
+9. In the SSL tab for `chat.${BASE_DOMAIN}`, request a new Let's Encrypt certificate
+10. Enable `Force SSL`
+11. Enable `HTTP/2 Support`
+12. Save
+13. In the SSL tab for `bitnet.${BASE_DOMAIN}`, request a new Let's Encrypt certificate
+14. Enable `Force SSL`
+15. Enable `HTTP/2 Support`
+16. Save
+
+Before certificate issuance will work:
+
+- DNS for `chat.${BASE_DOMAIN}` must point to the server
+- DNS for `bitnet.${BASE_DOMAIN}` must point to the server
+- ports `80` and `443` must be reachable from the internet
+- NPM must be the service listening on public `80` and `443`
+
+After that, verify:
+
+```bash
+curl -i https://chat.${BASE_DOMAIN}
+curl -i https://bitnet.${BASE_DOMAIN}/bitnet/v1/models
+curl -i -H "Authorization: Bearer ${MODEL_API_KEY}" https://bitnet.${BASE_DOMAIN}/bitnet/v1/models
+curl -i -H "Authorization: Bearer ${MODEL_API_KEY}" https://bitnet.${BASE_DOMAIN}/falcon/v1/models
+```
+
 Start by setting these required values in `.env`:
 
 - `DDCLIENT_PROTOCOL`
