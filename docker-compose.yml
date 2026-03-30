@@ -1,5 +1,4 @@
-services:
-  x-bitnet-api-env: &bitnet-api-env
+x-bitnet-api-env: &bitnet-api-env
     HOST: 0.0.0.0
     PORT: 8080
     THREADS: ${BITNET_THREADS}
@@ -16,13 +15,15 @@ services:
     LETSENCRYPT_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
     LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
-  x-bitnet-api-common: &bitnet-api-common
+x-bitnet-api-common: &bitnet-api-common
     image: bitnet-runtime:local
     env_file:
       - .env
     expose:
       - "8080"
     restart: unless-stopped
+
+services:
 
   nginx-proxy:
     image: nginxproxy/nginx-proxy:1.8
