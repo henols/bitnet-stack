@@ -25,9 +25,9 @@ services:
     image: jc21/nginx-proxy-manager:2.14.0
     container_name: nginx-proxy-manager
     ports:
-      - "80:80"
-      - "443:443"
-      - "81:81"
+      - "8080:80"
+      - "8443:443"
+      - "8181:81"
     environment:
       TZ: ${TZ}
     volumes:

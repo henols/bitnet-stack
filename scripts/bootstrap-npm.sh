@@ -13,10 +13,11 @@ fi
 
 : "${BASE_DOMAIN:?BASE_DOMAIN is required}"
 : "${CHAT_SUBDOMAIN:?CHAT_SUBDOMAIN is required}"
+: "${MODEL_API_KEY:?MODEL_API_KEY is required}"
 : "${NPM_EMAIL:?Set NPM_EMAIL in the environment before running this script}"
 : "${NPM_PASSWORD:?Set NPM_PASSWORD in the environment before running this script}"
 
-NPM_URL="${NPM_URL:-http://127.0.0.1:81}"
+NPM_URL="${NPM_URL:-http://127.0.0.1:8181}"
 CHAT_DOMAIN="${NPM_CHAT_DOMAIN:-${CHAT_SUBDOMAIN}.${BASE_DOMAIN}}"
 API_DOMAIN="${NPM_API_DOMAIN:-bitnet.${BASE_DOMAIN}}"
 
@@ -113,7 +114,7 @@ print(json.dumps({
 api_payload="$(
   python3 -c '
 import json, sys
-domain = sys.argv[1]
+domain, api_key = sys.argv[1], sys.argv[2]
 print(json.dumps({
     "domain_names": [domain],
     "forward_scheme": "http",
@@ -128,7 +129,11 @@ print(json.dumps({
     "block_exploits": True,
     "allow_websocket_upgrade": True,
     "caching_enabled": False,
-    "advanced_config": "",
+    "advanced_config": f"""
+if ($http_authorization != \"Bearer {api_key}\") {{
+    return 401;
+}}
+""".strip(),
     "locations": [
         {
             "path": "/bitnet/",
@@ -145,7 +150,7 @@ print(json.dumps({
     ],
     "meta": {"letsencrypt_agree": False, "dns_challenge": False}
 }))
-' "$API_DOMAIN"
+' "$API_DOMAIN" "$MODEL_API_KEY"
 )"
 
 upsert_proxy_host "$CHAT_DOMAIN" "$chat_payload"
