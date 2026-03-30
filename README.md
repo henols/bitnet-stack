@@ -3,8 +3,8 @@
 This project deploys:
 
 - `chat.<BASE_DOMAIN>` -> Open WebUI, proxied through Nginx Proxy Manager
-- `api.<BASE_DOMAIN>/bitnet/v1` -> API backend behind Nginx Proxy Manager
-- `api.<BASE_DOMAIN>/falcon/v1` -> second backend behind the same API hostname
+- `bitnet.<BASE_DOMAIN>/bitnet/v1` -> BitNet-backed API behind Nginx Proxy Manager
+- `bitnet.<BASE_DOMAIN>/falcon/v1` -> second backend behind the same API hostname
 - automatic HTTPS and proxy management via Nginx Proxy Manager
 - dynamic DNS updates via `ddclient`
 
@@ -46,8 +46,8 @@ All environment-specific values and secrets live in `.env`.
 
    - `http://<server-ip>:81` for Nginx Proxy Manager admin
    - `https://${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` for Open WebUI
-   - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/bitnet/v1/models`
-   - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/falcon/v1/models`
+   - `https://bitnet.${BASE_DOMAIN}/bitnet/v1/models`
+   - `https://bitnet.${BASE_DOMAIN}/falcon/v1/models`
 
 ## Common operations
 

@@ -11,10 +11,9 @@ x-bitnet-api-env: &bitnet-api-env
     HF_TOKEN: ${HF_TOKEN}
 
 x-bitnet-api-common: &bitnet-api-common
-    image: python:3.12-alpine
+    image: bitnet-runtime:local
     env_file:
       - .env
-    command: ["python", "/app/server.py"]
     expose:
       - "8080"
     restart: unless-stopped
@@ -49,13 +48,15 @@ services:
   # Build the BitNet runtime image once; model services below reuse it.
   bitnet-api:
     <<: *bitnet-api-common
+    build:
+      context: .
+      dockerfile: docker/bitnet/Dockerfile
     container_name: bitnet-api
     environment:
       <<: *bitnet-api-env
       SERVICE_NAME: bitnet
-      VIRTUAL_PATH: /bitnet
     volumes:
-      - ./docker/dummy-api/server.py:/app/server.py:ro
+      - ./models/bitnet:/models
 
   falcon-api:
     <<: *bitnet-api-common
@@ -63,9 +64,8 @@ services:
     environment:
       <<: *bitnet-api-env
       SERVICE_NAME: falcon
-      VIRTUAL_PATH: /falcon
     volumes:
-      - ./docker/dummy-api/server.py:/app/server.py:ro
+      - ./models/falcon:/models
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
