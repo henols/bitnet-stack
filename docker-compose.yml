@@ -9,49 +9,30 @@ x-bitnet-api-env: &bitnet-api-env
     CURRENT_MODEL_FILE: /models/.current_model
     QUANT_TYPE: ${BITNET_QUANT_TYPE}
     HF_TOKEN: ${HF_TOKEN}
-    VIRTUAL_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
-    VIRTUAL_DEST: /
-    VIRTUAL_PORT: 8080
-    LETSENCRYPT_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
-    LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
 x-bitnet-api-common: &bitnet-api-common
-    image: bitnet-runtime:local
+    image: python:3.12-alpine
     env_file:
       - .env
+    command: ["python", "/app/server.py"]
     expose:
       - "8080"
     restart: unless-stopped
 
 services:
 
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy:1.8
-    container_name: nginx-proxy
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.14.0
+    container_name: nginx-proxy-manager
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - certs:/etc/nginx/certs
-      - html:/usr/share/nginx/html
-      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    restart: unless-stopped
-
-  acme-companion:
-    image: nginxproxy/acme-companion:2.6
-    container_name: acme-companion
-    depends_on:
-      - nginx-proxy
+      - "81:81"
     environment:
-      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
-      NGINX_PROXY_CONTAINER: nginx-proxy
+      TZ: ${TZ}
     volumes:
-      - certs:/etc/nginx/certs
-      - html:/usr/share/nginx/html
-      - acme:/etc/acme.sh
-      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
     restart: unless-stopped
 
   ddclient:
@@ -68,16 +49,13 @@ services:
   # Build the BitNet runtime image once; model services below reuse it.
   bitnet-api:
     <<: *bitnet-api-common
-    build:
-      context: .
-      dockerfile: docker/bitnet/Dockerfile
     container_name: bitnet-api
     environment:
       <<: *bitnet-api-env
       SERVICE_NAME: bitnet
       VIRTUAL_PATH: /bitnet
     volumes:
-      - ./models/bitnet:/models
+      - ./docker/dummy-api/server.py:/app/server.py:ro
 
   falcon-api:
     <<: *bitnet-api-common
@@ -87,7 +65,7 @@ services:
       SERVICE_NAME: falcon
       VIRTUAL_PATH: /falcon
     volumes:
-      - ./models/falcon:/models
+      - ./docker/dummy-api/server.py:/app/server.py:ro
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -96,10 +74,6 @@ services:
       - bitnet-api
       - falcon-api
     environment:
-      VIRTUAL_HOST: ${CHAT_SUBDOMAIN}.${BASE_DOMAIN}
-      LETSENCRYPT_HOST: ${CHAT_SUBDOMAIN}.${BASE_DOMAIN}
-      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
-      VIRTUAL_PORT: 8080
     expose:
       - "8080"
     volumes:
@@ -107,7 +81,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  certs:
-  html:
-  acme:
+  npm-data:
+  npm-letsencrypt:
   open-webui-data:

@@ -19,7 +19,6 @@ mkdir -p nginx/vhost.d config/ddclient models/bitnet models/falcon
 : "${BASE_DOMAIN:?BASE_DOMAIN is required}"
 : "${API_SUBDOMAIN:?API_SUBDOMAIN is required}"
 : "${CHAT_SUBDOMAIN:?CHAT_SUBDOMAIN is required}"
-: "${MODEL_API_KEY:?MODEL_API_KEY is required}"
 : "${BITNET_MODEL_REPO:?BITNET_MODEL_REPO is required}"
 : "${FALCON_MODEL_REPO:?FALCON_MODEL_REPO is required}"
 : "${DDCLIENT_PROTOCOL:?DDCLIENT_PROTOCOL is required}"
@@ -27,19 +26,7 @@ mkdir -p nginx/vhost.d config/ddclient models/bitnet models/falcon
 : "${DDCLIENT_PASSWORD:?DDCLIENT_PASSWORD is required}"
 : "${DDCLIENT_HOSTS:?DDCLIENT_HOSTS is required}"
 
-API_HOST="${API_SUBDOMAIN}.${BASE_DOMAIN}"
-CHAT_HOST="${CHAT_SUBDOMAIN}.${BASE_DOMAIN}"
-
-# Keep the nginx auth snippet safe: bearer tokens should be a single plain token.
-case "$MODEL_API_KEY" in
-  *[!A-Za-z0-9._~+/-=]*)
-    echo "MODEL_API_KEY contains unsupported characters for nginx config."
-    echo "Use a single token containing only letters, digits, '.', '_', '~', '+', '/', '-', '='."
-    exit 1
-    ;;
-esac
-
-export API_HOST CHAT_HOST MODEL_API_KEY DDCLIENT_DAEMON_SECONDS DDCLIENT_SSL DDCLIENT_USE DDCLIENT_WEB DDCLIENT_WEB_SKIP DDCLIENT_PROTOCOL DDCLIENT_LOGIN DDCLIENT_PASSWORD DDCLIENT_HOSTS
+export DDCLIENT_DAEMON_SECONDS DDCLIENT_SSL DDCLIENT_USE DDCLIENT_WEB DDCLIENT_WEB_SKIP DDCLIENT_PROTOCOL DDCLIENT_LOGIN DDCLIENT_PASSWORD DDCLIENT_HOSTS
 
 DDCLIENT_CUSTOM_LINE="${DDCLIENT_CUSTOM:+custom=${DDCLIENT_CUSTOM}}"
 DDCLIENT_SERVER_LINE="${DDCLIENT_SERVER:+server=${DDCLIENT_SERVER}}"
@@ -56,12 +43,10 @@ else
   exit 1
 fi
 
-envsubst < templates/api-vhost.conf.tmpl > "nginx/vhost.d/${API_HOST}"
 envsubst < templates/ddclient.conf.tmpl > config/ddclient/ddclient.conf
 printf '%s\n' "$BITNET_MODEL_REPO" > models/bitnet/.current_model
 printf '%s\n' "$FALCON_MODEL_REPO" > models/falcon/.current_model
 
-echo "Rendered nginx/vhost.d/${API_HOST}"
 echo "Rendered config/ddclient/ddclient.conf"
 echo "Wrote models/bitnet/.current_model"
 echo "Wrote models/falcon/.current_model"

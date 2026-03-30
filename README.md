@@ -2,10 +2,10 @@
 
 This project deploys:
 
-- `chat.<BASE_DOMAIN>` -> Open WebUI
-- `api.<BASE_DOMAIN>/bitnet/v1` -> BitNet-backed OpenAI-compatible API
-- `api.<BASE_DOMAIN>/falcon/v1` -> second model container behind the same API hostname
-- automatic HTTPS via `nginx-proxy` + `acme-companion`
+- `chat.<BASE_DOMAIN>` -> Open WebUI, proxied through Nginx Proxy Manager
+- `api.<BASE_DOMAIN>/bitnet/v1` -> API backend behind Nginx Proxy Manager
+- `api.<BASE_DOMAIN>/falcon/v1` -> second backend behind the same API hostname
+- automatic HTTPS and proxy management via Nginx Proxy Manager
 - dynamic DNS updates via `ddclient`
 
 All environment-specific values and secrets live in `.env`.
@@ -15,8 +15,7 @@ All environment-specific values and secrets live in `.env`.
 - Docker Compose stack
 - BitNet build image with the fixes needed for current upstream builds
 - runtime model downloader / preparer
-- reverse proxy with ACME certificates
-- generated nginx auth config for one shared API key
+- reverse proxy with ACME certificates and web UI
 - generated ddclient config from env vars
 - helper scripts for deploy, logs, status, and model switching
 
@@ -45,18 +44,10 @@ All environment-specific values and secrets live in `.env`.
 
 5. Open:
 
+   - `http://<server-ip>:81` for Nginx Proxy Manager admin
    - `https://${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` for Open WebUI
    - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/bitnet/v1/models`
    - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/falcon/v1/models`
-
-## How Open WebUI should be configured
-
-Inside Open WebUI, add OpenAI-compatible connections that use:
-
-- `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/bitnet/v1`
-- `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/falcon/v1`
-
-Use the same API key value you set as `MODEL_API_KEY` in `.env`.
 
 ## Common operations
 
@@ -102,12 +93,23 @@ After switching, restart the specific backend:
 - The BitNet image downloads models at runtime into the mounted `./models` folders.
 - If the selected repo ends in `-gguf`, the entrypoint downloads the repo directly and uses the existing `ggml-model-<quant>.gguf` file.
 - Otherwise it falls back to BitNet's `setup_env.py --hf-repo ...` path.
-- The reverse proxy protects the whole `api.<BASE_DOMAIN>` host with one shared bearer token.
 - `ddclient` updates the public DNS record for the hostnames you list in `DDCLIENT_HOSTS`.
 
 ## DNS notes
 
 This stack renders `config/ddclient/ddclient.conf` from env vars. The template is provider-neutral and supports both a minimal config and provider-specific extra lines.
+
+## Nginx Proxy Manager
+
+After the stack is running, log in to Nginx Proxy Manager on port `81`. The official default credentials are `admin@example.com` / `changeme`, and NPM will ask you to change them on first login.
+
+Create proxy hosts in the UI:
+
+- `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `open-webui`, port `8080`
+- `${API_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `bitnet-api`, port `8080`, with advanced path handling for `/bitnet`
+- `${API_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `falcon-api`, port `8080`, with advanced path handling for `/falcon`
+
+You can then add Let's Encrypt certificates through the UI instead of managing ACME through compose env vars.
 
 Start by setting these required values in `.env`:
 
