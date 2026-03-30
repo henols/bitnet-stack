@@ -17,7 +17,7 @@ fi
 : "${NPM_EMAIL:?Set NPM_EMAIL in the environment before running this script}"
 : "${NPM_PASSWORD:?Set NPM_PASSWORD in the environment before running this script}"
 
-NPM_URL="${NPM_URL:-http://127.0.0.1:8181}"
+NPM_URL="${NPM_URL:-http://127.0.0.1:81}"
 CHAT_DOMAIN="${NPM_CHAT_DOMAIN:-${CHAT_SUBDOMAIN}.${BASE_DOMAIN}}"
 API_DOMAIN="${NPM_API_DOMAIN:-bitnet.${BASE_DOMAIN}}"
 

@@ -44,7 +44,7 @@ All environment-specific values and secrets live in `.env`.
 
 5. Open:
 
-   - `http://<server-ip>:8181` for Nginx Proxy Manager admin
+   - `http://<server-ip>:81` for Nginx Proxy Manager admin
    - `https://${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` for Open WebUI
    - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/bitnet/v1/models`
    - `https://${API_SUBDOMAIN}.${BASE_DOMAIN}/falcon/v1/models`
@@ -101,7 +101,7 @@ This stack renders `config/ddclient/ddclient.conf` from env vars. The template i
 
 ## Nginx Proxy Manager
 
-After the stack is running, log in to Nginx Proxy Manager on port `8181`. The official default credentials are `admin@example.com` / `changeme`, and NPM will ask you to change them on first login.
+After the stack is running, log in to Nginx Proxy Manager on port `81`. The official default credentials are `admin@example.com` / `changeme`, and NPM will ask you to change them on first login.
 
 You can either create proxy hosts in the UI or bootstrap them from the host with [bootstrap-npm.sh](/home/henrik/dev/henrik/git/bitnet-stack/scripts/bootstrap-npm.sh).
 
@@ -116,7 +116,7 @@ NPM_PASSWORD='your-npm-password' \
 
 Optional overrides:
 
-- `NPM_URL` defaults to `http://127.0.0.1:8181`
+- `NPM_URL` defaults to `http://127.0.0.1:81`
 - `NPM_CHAT_DOMAIN` defaults to `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}`
 - `NPM_API_DOMAIN` defaults to `bitnet.${BASE_DOMAIN}`
 
