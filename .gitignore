@@ -1,0 +1,13 @@
+.env
+.codex
+models/
+!models/bitnet/
+!models/falcon/
+models/bitnet/*
+models/falcon/*
+!models/bitnet/.gitkeep
+!models/falcon/.gitkeep
+nginx/vhost.d/*
+!nginx/vhost.d/.gitkeep
+config/ddclient/*
+!config/ddclient/.gitkeep

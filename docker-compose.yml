@@ -1,0 +1,127 @@
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:1.8
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: unless-stopped
+
+  acme-companion:
+    image: nginxproxy/acme-companion:2.6
+    container_name: acme-companion
+    depends_on:
+      - nginx-proxy
+    environment:
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - acme:/etc/acme.sh
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  ddclient:
+    image: lscr.io/linuxserver/ddclient:latest
+    container_name: ddclient
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ./config/ddclient:/config
+    restart: unless-stopped
+
+  bitnet-api:
+    build:
+      context: .
+      dockerfile: docker/bitnet/Dockerfile
+    container_name: bitnet-api
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: bitnet
+      HOST: 0.0.0.0
+      PORT: 8080
+      THREADS: ${BITNET_THREADS}
+      CTX_SIZE: ${BITNET_CTX_SIZE}
+      N_PREDICT: ${BITNET_N_PREDICT}
+      TEMPERATURE: ${BITNET_TEMPERATURE}
+      MODELS_DIR: /models
+      CURRENT_MODEL_FILE: /models/.current_model
+      QUANT_TYPE: ${BITNET_QUANT_TYPE}
+      HF_TOKEN: ${HF_TOKEN}
+      VIRTUAL_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
+      VIRTUAL_PATH: /bitnet
+      VIRTUAL_DEST: /
+      VIRTUAL_PORT: 8080
+      LETSENCRYPT_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    expose:
+      - "8080"
+    volumes:
+      - ./models/bitnet:/models
+    restart: unless-stopped
+
+  falcon-api:
+    build:
+      context: .
+      dockerfile: docker/bitnet/Dockerfile
+    container_name: falcon-api
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: falcon
+      HOST: 0.0.0.0
+      PORT: 8080
+      THREADS: ${BITNET_THREADS}
+      CTX_SIZE: ${BITNET_CTX_SIZE}
+      N_PREDICT: ${BITNET_N_PREDICT}
+      TEMPERATURE: ${BITNET_TEMPERATURE}
+      MODELS_DIR: /models
+      CURRENT_MODEL_FILE: /models/.current_model
+      QUANT_TYPE: ${BITNET_QUANT_TYPE}
+      HF_TOKEN: ${HF_TOKEN}
+      VIRTUAL_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
+      VIRTUAL_PATH: /falcon
+      VIRTUAL_DEST: /
+      VIRTUAL_PORT: 8080
+      LETSENCRYPT_HOST: ${API_SUBDOMAIN}.${BASE_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    expose:
+      - "8080"
+    volumes:
+      - ./models/falcon:/models
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    depends_on:
+      - bitnet-api
+      - falcon-api
+    environment:
+      VIRTUAL_HOST: ${CHAT_SUBDOMAIN}.${BASE_DOMAIN}
+      LETSENCRYPT_HOST: ${CHAT_SUBDOMAIN}.${BASE_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      VIRTUAL_PORT: 8080
+    expose:
+      - "8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    restart: unless-stopped
+
+volumes:
+  certs:
+  vhost:
+  html:
+  acme:
+  open-webui-data:
