@@ -114,11 +114,24 @@ NPM_PASSWORD='your-npm-password' \
 ./scripts/bootstrap-npm.sh
 ```
 
+To also request and attach Let's Encrypt certificates automatically:
+
+```bash
+MODEL_API_KEY='your-shared-api-key' \
+NPM_EMAIL=you@example.com \
+NPM_PASSWORD='your-npm-password' \
+NPM_ENABLE_SSL=true \
+LETSENCRYPT_EMAIL=you@example.com \
+./scripts/bootstrap-npm.sh
+```
+
 Optional overrides:
 
 - `NPM_URL` defaults to `http://127.0.0.1:81`
 - `NPM_CHAT_DOMAIN` defaults to `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}`
 - `NPM_API_DOMAIN` defaults to `bitnet.${BASE_DOMAIN}`
+- `NPM_ENABLE_SSL` defaults to `false`
+- `LETSENCRYPT_EMAIL` is required when `NPM_ENABLE_SSL=true`
 
 If you prefer the UI, create proxy hosts like this:
 
