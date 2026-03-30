@@ -103,8 +103,36 @@ After switching, restart the specific backend:
 - If the selected repo ends in `-gguf`, the entrypoint downloads the repo directly and uses the existing `ggml-model-<quant>.gguf` file.
 - Otherwise it falls back to BitNet's `setup_env.py --hf-repo ...` path.
 - The reverse proxy protects the whole `api.<BASE_DOMAIN>` host with one shared bearer token.
-- `ddclient` updates the public DNS record for `api.<BASE_DOMAIN>` and `chat.<BASE_DOMAIN>` by updating the underlying hostname / record you configure in `.env`.
+- `ddclient` updates the public DNS record for the hostnames you list in `DDCLIENT_HOSTS`.
 
 ## DNS notes
 
-This stack assumes that your DDNS provider can update the record you configure through `ddclient`. If your provider needs a different `ddclient` stanza than the example template, edit `templates/ddclient.conf.tmpl` and rerun `./scripts/render-configs.sh`.
+This stack renders `config/ddclient/ddclient.conf` from env vars. The template is provider-neutral and supports both a minimal config and provider-specific extra lines.
+
+Start by setting these required values in `.env`:
+
+- `DDCLIENT_PROTOCOL`
+- `DDCLIENT_LOGIN`
+- `DDCLIENT_PASSWORD`
+- `DDCLIENT_HOSTS`
+
+Then add optional values only if your provider requires them:
+
+- `DDCLIENT_CUSTOM`
+- `DDCLIENT_SERVER`
+- `DDCLIENT_SCRIPT`
+- `DDCLIENT_PROVIDER`
+- `DDCLIENT_ZONE`
+- `DDCLIENT_TTL`
+
+`DDCLIENT_HOSTS` becomes the final hostname line in `ddclient.conf`. For some providers that can be a single hostname like `api.example.com`; for others it can be a comma-separated list like `example.com,api.example.com,chat.example.com`.
+
+Generic setup flow:
+
+1. Find the working `ddclient` example for your DNS provider.
+2. Map each directive from that example to the matching `DDCLIENT_*` variable in `.env`.
+3. Leave unused optional variables unset.
+4. Run `./scripts/render-configs.sh` to inspect the generated config.
+5. Run `./scripts/deploy.sh` once the rendered `config/ddclient/ddclient.conf` matches your provider's expected format.
+
+If your provider's documentation uses a directive that is not covered by the current template, add it to [templates/ddclient.conf.tmpl](/home/henrik/dev/henrik/git/bitnet-stack/templates/ddclient.conf.tmpl) and export it in [scripts/render-configs.sh](/home/henrik/dev/henrik/git/bitnet-stack/scripts/render-configs.sh).
