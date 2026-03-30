@@ -23,7 +23,7 @@ All environment-specific values and secrets live in `.env`.
 
 - Docker Engine
 - Docker Compose plugin
-- ports `80`, `443`, and `22` reachable from the internet
+- ports `80` and `443` reachable from the internet
 - DNS record(s) for your chosen hostnames pointing at your server
 
 ## Quick start
@@ -48,6 +48,17 @@ All environment-specific values and secrets live in `.env`.
    - `https://${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` for Open WebUI
    - `https://bitnet.${BASE_DOMAIN}/bitnet/v1/models`
    - `https://bitnet.${BASE_DOMAIN}/falcon/v1/models`
+
+## Open WebUI
+
+In Open WebUI, add OpenAI-compatible connections with:
+
+- Base URL: `https://bitnet.${BASE_DOMAIN}/bitnet/v1`
+- Base URL: `https://bitnet.${BASE_DOMAIN}/falcon/v1`
+
+Use the same API key for both:
+
+- `${MODEL_API_KEY}`
 
 ## Common operations
 
@@ -95,10 +106,6 @@ After switching, restart the specific backend:
 - Otherwise it falls back to BitNet's `setup_env.py --hf-repo ...` path.
 - `ddclient` updates the public DNS record for the hostnames you list in `DDCLIENT_HOSTS`.
 
-## DNS notes
-
-This stack renders `config/ddclient/ddclient.conf` from env vars. The template is provider-neutral and supports both a minimal config and provider-specific extra lines.
-
 ## Nginx Proxy Manager
 
 After the stack is running, log in to Nginx Proxy Manager on port `81`. The official default credentials are `admin@example.com` / `changeme`, and NPM will ask you to change them on first login.
@@ -114,27 +121,9 @@ NPM_PASSWORD='your-npm-password' \
 ./scripts/bootstrap-npm.sh
 ```
 
-Optional overrides:
-
-- `NPM_URL` defaults to `http://127.0.0.1:81`
-- `NPM_CHAT_DOMAIN` defaults to `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}`
-- `NPM_API_DOMAIN` defaults to `bitnet.${BASE_DOMAIN}`
-
-If you prefer the UI, create proxy hosts like this:
-
-- `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `open-webui`, port `8080`
-- `bitnet.${BASE_DOMAIN}` -> forward to `bitnet-api`, port `8080`
-  custom locations:
-  `/bitnet/` -> `bitnet-api:8080`
-  `/falcon/` -> `falcon-api:8080`
-  advanced config:
-  require `Authorization: Bearer ${MODEL_API_KEY}`
-
-You can then add Let's Encrypt certificates through the UI instead of managing ACME through compose env vars.
-
 ### Recommended NPM UI Setup
 
-Use the script for host bootstrap if you want, but configure SSL in the NPM UI.
+Use the bootstrap script for host creation if you want, but configure SSL in the NPM UI.
 
 1. Log in to NPM at `http://<server-ip>:81`
 2. Create or verify a Proxy Host for `chat.${BASE_DOMAIN}`
@@ -176,14 +165,18 @@ curl -i -H "Authorization: Bearer ${MODEL_API_KEY}" https://bitnet.${BASE_DOMAIN
 curl -i -H "Authorization: Bearer ${MODEL_API_KEY}" https://bitnet.${BASE_DOMAIN}/falcon/v1/models
 ```
 
-Start by setting these required values in `.env`:
+## DDClient
+
+This stack renders `config/ddclient/ddclient.conf` from `.env` into [ddclient.conf.tmpl](/home/henrik/dev/henrik/git/bitnet-stack/templates/ddclient.conf.tmpl).
+
+Set these required values in `.env`:
 
 - `DDCLIENT_PROTOCOL`
 - `DDCLIENT_LOGIN`
 - `DDCLIENT_PASSWORD`
 - `DDCLIENT_HOSTS`
 
-Then add optional values only if your provider requires them:
+Optional values, only if your provider requires them:
 
 - `DDCLIENT_SERVER`
 - `DDCLIENT_SCRIPT`
@@ -191,16 +184,21 @@ Then add optional values only if your provider requires them:
 - `DDCLIENT_ZONE`
 - `DDCLIENT_TTL`
 
-`DDCLIENT_HOSTS` becomes the final hostname line in `ddclient.conf`. For some providers that can be a single hostname like `api.example.com`; for others it can be a comma-separated list like `example.com,api.example.com,chat.example.com`.
+For this setup, `DDCLIENT_HOSTS` should usually contain:
 
-Generic setup flow:
+- `bitnet.${BASE_DOMAIN}`
+- `chat.${BASE_DOMAIN}`
 
-1. Find the working `ddclient` example for your DNS provider.
-2. Map each directive from that example to the matching `DDCLIENT_*` variable in `.env`.
-3. Leave unused optional variables unset.
-4. Run `./scripts/render-configs.sh` to inspect the generated config.
-5. Run `./scripts/deploy.sh` once the rendered `config/ddclient/ddclient.conf` matches your provider's expected format.
+Run:
 
-If your provider's documentation uses a directive that is not covered by the current template, add it to [templates/ddclient.conf.tmpl](/home/henrik/dev/henrik/git/bitnet-stack/templates/ddclient.conf.tmpl) and export it in [scripts/render-configs.sh](/home/henrik/dev/henrik/git/bitnet-stack/scripts/render-configs.sh).
+```bash
+./scripts/render-configs.sh
+```
+
+Then inspect:
+
+```bash
+cat config/ddclient/ddclient.conf
+```
 
 Note: current `ddclient` v4 images no longer accept the older `custom=yes` directive for `dyndns2` setups, so do not set `DDCLIENT_CUSTOM` unless you have verified your image/provider combination still supports it.
