@@ -35,6 +35,7 @@ else
   LOCAL_MODEL_DIR="${MODELS_DIR}/${MODEL_NAME}"
 fi
 GGUF_PATH="${LOCAL_MODEL_DIR}/ggml-model-${QUANT_TYPE}.gguf"
+PREPARED_MARKER="${LOCAL_MODEL_DIR}/.prepared-${QUANT_TYPE}"
 
 mkdir -p "$LOCAL_MODEL_DIR"
 
@@ -45,16 +46,24 @@ if [[ "$HF_REPO" == *-gguf ]]; then
   if [ ! -f "$GGUF_PATH" ]; then
     echo "Downloading GGUF model repo from Hugging Face..."
     hf download "$HF_REPO" --local-dir "$LOCAL_MODEL_DIR"
-  else
-    echo "Prepared model already exists: $GGUF_PATH"
   fi
 
-  # BitNet's official setup flow compiles llama-server and any model-specific code.
-  echo "Preparing BitNet runtime for local GGUF model..."
-  python setup_env.py --model-dir "$LOCAL_MODEL_DIR" --quant-type "$QUANT_TYPE"
+  if [ ! -f "$PREPARED_MARKER" ] || [ ! -f "$GGUF_PATH" ] || [ ! -x build/bin/llama-server ]; then
+    # BitNet's official setup flow compiles llama-server and any model-specific code.
+    echo "Preparing BitNet runtime for local GGUF model..."
+    python setup_env.py --model-dir "$LOCAL_MODEL_DIR" --quant-type "$QUANT_TYPE"
+    touch "$PREPARED_MARKER"
+  else
+    echo "BitNet runtime already prepared for $HF_REPO ($QUANT_TYPE)"
+  fi
 else
-  echo "Preparing BitNet runtime and model via setup_env.py..."
-  python setup_env.py --hf-repo "$HF_REPO" --model-dir "$MODELS_DIR" --quant-type "$QUANT_TYPE"
+  if [ ! -f "$PREPARED_MARKER" ] || [ ! -f "$GGUF_PATH" ] || [ ! -x build/bin/llama-server ]; then
+    echo "Preparing BitNet runtime and model via setup_env.py..."
+    python setup_env.py --hf-repo "$HF_REPO" --model-dir "$MODELS_DIR" --quant-type "$QUANT_TYPE"
+    touch "$PREPARED_MARKER"
+  else
+    echo "BitNet runtime already prepared for $HF_REPO ($QUANT_TYPE)"
+  fi
 fi
 
 exec python run_inference_server.py \
