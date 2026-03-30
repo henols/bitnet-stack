@@ -103,11 +103,29 @@ This stack renders `config/ddclient/ddclient.conf` from env vars. The template i
 
 After the stack is running, log in to Nginx Proxy Manager on port `81`. The official default credentials are `admin@example.com` / `changeme`, and NPM will ask you to change them on first login.
 
-Create proxy hosts in the UI:
+You can either create proxy hosts in the UI or bootstrap them from the host with [bootstrap-npm.sh](/home/henrik/dev/henrik/git/bitnet-stack/scripts/bootstrap-npm.sh).
+
+Bootstrap example:
+
+```bash
+NPM_EMAIL=you@example.com \
+NPM_PASSWORD='your-npm-password' \
+./scripts/bootstrap-npm.sh
+```
+
+Optional overrides:
+
+- `NPM_URL` defaults to `http://127.0.0.1:81`
+- `NPM_CHAT_DOMAIN` defaults to `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}`
+- `NPM_API_DOMAIN` defaults to `bitnet.${BASE_DOMAIN}`
+
+If you prefer the UI, create proxy hosts like this:
 
 - `${CHAT_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `open-webui`, port `8080`
-- `${API_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `bitnet-api`, port `8080`, with advanced path handling for `/bitnet`
-- `${API_SUBDOMAIN}.${BASE_DOMAIN}` -> forward to `falcon-api`, port `8080`, with advanced path handling for `/falcon`
+- `bitnet.${BASE_DOMAIN}` -> forward to `bitnet-api`, port `8080`
+  custom locations:
+  `/bitnet/` -> `bitnet-api:8080`
+  `/falcon/` -> `falcon-api:8080`
 
 You can then add Let's Encrypt certificates through the UI instead of managing ACME through compose env vars.
 
