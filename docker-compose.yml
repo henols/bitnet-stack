@@ -73,7 +73,6 @@ services:
     depends_on:
       - bitnet-api
       - falcon-api
-    environment:
     expose:
       - "8080"
     volumes:
