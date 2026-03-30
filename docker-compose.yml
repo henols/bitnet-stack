@@ -7,7 +7,6 @@ services:
       - "443:443"
     volumes:
       - certs:/etc/nginx/certs
-      - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
       - /var/run/docker.sock:/tmp/docker.sock:ro
@@ -22,7 +21,6 @@ services:
       DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
     volumes:
       - certs:/etc/nginx/certs
-      - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - acme:/etc/acme.sh
       - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
@@ -121,7 +119,6 @@ services:
 
 volumes:
   certs:
-  vhost:
   html:
   acme:
   open-webui-data:
