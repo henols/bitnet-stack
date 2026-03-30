@@ -139,13 +139,15 @@ if ($http_authorization != \"Bearer {api_key}\") {{
             "path": "/bitnet/",
             "forward_scheme": "http",
             "forward_host": "bitnet-api",
-            "forward_port": 8080
+            "forward_port": 8080,
+            "forward_path": "/"
         },
         {
             "path": "/falcon/",
             "forward_scheme": "http",
             "forward_host": "falcon-api",
-            "forward_port": 8080
+            "forward_port": 8080,
+            "forward_path": "/"
         }
     ],
     "meta": {"letsencrypt_agree": False, "dns_challenge": False}
